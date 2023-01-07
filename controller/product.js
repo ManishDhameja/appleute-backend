@@ -1,6 +1,25 @@
 import mongoose from "mongoose";
 import Product from "../models/product.js";
 import User from "../models/user.js";
+import CartItem from "../models/cartItem.js";
+
+export async function addToCart(req, res) {
+  const { pid, uid, qty, color, size } = req.query;
+  const [product] = await Product.find({ _id: mongoose.Types.ObjectId(pid) });
+  const cartItem = await CartItem.create({
+    name: product.name,
+    img: product.img,
+    quantity: qty,
+    price: product.price,
+    color,
+    size,
+    total: qty * product.price,
+  });
+  const [user] = await User.find({ _id: mongoose.Types.ObjectId(uid) });
+  user.cart.push(cartItem._id);
+  await user.save();
+  user.populate("cart").then((usr) => res.status(200).json(usr["cart"]));
+}
 
 export function getAllItems(req, res) {
   Product.find().then((items) => res.status(200).json(items));
