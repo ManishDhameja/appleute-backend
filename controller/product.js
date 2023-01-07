@@ -21,6 +21,34 @@ export async function addToCart(req, res) {
   user.populate("cart").then((usr) => res.status(200).json(usr["cart"]));
 }
 
+export function removeFromCart(req, res) {
+  const userId = mongoose.Types.ObjectId(req.query.uid);
+  const currentItemId = mongoose.Types.ObjectId(req.query.id);
+  User.find({ _id: userId }).then(([user]) => {
+    const updatedCart = user.cart.filter(
+      (itemId) => !itemId.equals(currentItemId)
+    );
+    user.cart = updatedCart;
+    user
+      .save()
+      .then((user) => user.populate("cart"))
+      .then((usr) => res.status(200).json(usr["cart"]));
+  });
+}
+
+export async function getCartTotal(req, res) {
+  const userId = mongoose.Types.ObjectId(req.query.uid);
+  User.find({ _id: userId })
+    .populate("cart")
+    .then(([user]) => {
+      let total = 0;
+      user.cart.forEach((item) => {
+        total += item.total;
+      });
+      res.status(200).json(total);
+    });
+}
+
 export function getAllItems(req, res) {
   Product.find().then((items) => res.status(200).json(items));
 }
@@ -48,15 +76,4 @@ export function create(req, res) {
       res.status(200).json(data);
     });
   });
-}
-
-export async function add_card(req, res) {
-  const newItem = await Product.create(req.body);
-  const current_user = await User.find({
-    _id: mongoose.Types.ObjectId(req.query.uid),
-  });
-  current_user.cart.push(newItem._id);
-  await current_user.save();
-  const { cart } = await current_user.populate("Product");
-  res.status(200).json(cart);
 }

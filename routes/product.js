@@ -5,5 +5,7 @@ const router = express.Router();
 router.post("/create", productController.create);
 router.get("/getAll", productController.getAllItems);
 router.get("/findById", productController.findById);
+router.get("/addToCart", productController.addToCart);
+router.get("/removeFromCart", productController.removeFromCart);
 
 export default router;
