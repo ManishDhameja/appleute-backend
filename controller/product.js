@@ -3,6 +3,34 @@ import Product from "../models/product.js";
 import User from "../models/user.js";
 import CartItem from "../models/cartItem.js";
 
+export async function getCartTotal(req, res) {
+  const userId = mongoose.Types.ObjectId(req.query.uid);
+  User.find({ _id: userId })
+    .populate("cart")
+    .then(([user]) => {
+      let total = 0;
+      user.cart.forEach((item) => {
+        total += item.total;
+      });
+      res.status(200).json(total);
+    });
+}
+
+export function removeFromCart(req, res) {
+  const userId = mongoose.Types.ObjectId(req.query.uid);
+  const currentItemId = mongoose.Types.ObjectId(req.query.id);
+  User.find({ _id: userId }).then(([user]) => {
+    const updatedCart = user.cart.filter(
+      (itemId) => !itemId.equals(currentItemId)
+    );
+    user.cart = updatedCart;
+    user
+      .save()
+      .then((user) => user.populate("cart"))
+      .then((usr) => res.status(200).json(usr["cart"]));
+  });
+}
+
 export async function addToCart(req, res) {
   const { pid, uid, qty, color, size } = req.query;
   const [product] = await Product.find({ _id: mongoose.Types.ObjectId(pid) });
@@ -21,34 +49,6 @@ export async function addToCart(req, res) {
   user.populate("cart").then((usr) => res.status(200).json(usr["cart"]));
 }
 
-export function removeFromCart(req, res) {
-  const userId = mongoose.Types.ObjectId(req.query.uid);
-  const currentItemId = mongoose.Types.ObjectId(req.query.id);
-  User.find({ _id: userId }).then(([user]) => {
-    const updatedCart = user.cart.filter(
-      (itemId) => !itemId.equals(currentItemId)
-    );
-    user.cart = updatedCart;
-    user
-      .save()
-      .then((user) => user.populate("cart"))
-      .then((usr) => res.status(200).json(usr["cart"]));
-  });
-}
-
-export async function getCartTotal(req, res) {
-  const userId = mongoose.Types.ObjectId(req.query.uid);
-  User.find({ _id: userId })
-    .populate("cart")
-    .then(([user]) => {
-      let total = 0;
-      user.cart.forEach((item) => {
-        total += item.total;
-      });
-      res.status(200).json(total);
-    });
-}
-
 export function getAllItems(req, res) {
   Product.find().then((items) => res.status(200).json(items));
 }
@@ -60,16 +60,17 @@ export function findById(req, res) {
 }
 
 export function create(req, res) {
-  const { name, img, quantity, price, colors, sizes } = req.body;
+  const { name, imgs, quantity, price, colors, sizes, desc } = req.body;
   const total = price * quantity;
-  const product = new Product({
+  const product = new Product({ 
     name,
-    img,
+    imgs,
     quantity,
     price,
     total,
     colors,
     sizes,
+    desc
   });
   product.save().then(() => {
     Product.find().then((data) => {

@@ -9,7 +9,6 @@ import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/product.js";
 import orderRoutes from "./routes/order.js";
 import {errorHandler} from './middleware/error.js'
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
