@@ -37,3 +37,13 @@ export async function addOrder(req, res) {
     res.status(400).json({err: "invalid input"});
   }
 }
+
+function getProducts(cart) {
+  let products = "";
+
+  for (const product of cart) {
+    products += `${product.name}\nColor: ${product.color}\nVariant: ${product.variant}\nSize: ${product.size}\nQty: ${product.quantity}\n\n`;
+  }
+
+  return products.trim();
+}
